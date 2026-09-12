@@ -1,0 +1,905 @@
+<title>Setting Hermes</title>
+<style>
+  :root{
+    --bg:#EFF2F6;
+    --surface:#FFFFFF;
+    --surface-2:#F6F8FB;
+    --ink:#1A2233;
+    --ink-muted:#5B6478;
+    --accent:#9C6B2E;
+    --accent-strong:#7E5522;
+    --line:#D8DEE8;
+    --good:#2E7D53;
+    --good-bg:#E6F2EB;
+    --warn:#A6402F;
+    --warn-bg:#FBEAE6;
+    --term-bg:#1C2333;
+    --term-ink:#E7EAF2;
+    --term-muted:#8791A8;
+    --shadow: 0 18px 40px -22px rgba(26,34,51,.35);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#10131C;
+      --surface:#181D2A;
+      --surface-2:#1F2534;
+      --ink:#E8EAF0;
+      --ink-muted:#8891A6;
+      --accent:#D9A257;
+      --accent-strong:#EAB876;
+      --line:#2A3040;
+      --good:#5FBE86;
+      --good-bg:#16261D;
+      --warn:#E2725C;
+      --warn-bg:#2C1A17;
+      --term-bg:#0C0F17;
+      --term-ink:#E7EAF2;
+      --term-muted:#7B84A0;
+      --shadow: 0 18px 40px -18px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#10131C;
+    --surface:#181D2A;
+    --surface-2:#1F2534;
+    --ink:#E8EAF0;
+    --ink-muted:#8891A6;
+    --accent:#D9A257;
+    --accent-strong:#EAB876;
+    --line:#2A3040;
+    --good:#5FBE86;
+    --good-bg:#16261D;
+    --warn:#E2725C;
+    --warn-bg:#2C1A17;
+    --term-bg:#0C0F17;
+    --term-ink:#E7EAF2;
+    --term-muted:#7B84A0;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+    overflow:hidden;
+    position:fixed;
+    inset:0;
+    width:100%;
+  }
+  h1,h2{
+    font-family:"Fraunces","Georgia",serif;
+    font-weight:600;
+    text-wrap:balance;
+    margin:0;
+    letter-spacing:-0.01em;
+  }
+  code, .mono{
+    font-family:"IBM Plex Mono",ui-monospace,Consolas,monospace;
+  }
+  p{margin:0;}
+
+  .deck{
+    position:absolute;
+    inset:0;
+    top:0;
+    bottom:64px;
+  }
+
+  .slide{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:56px 28px;
+    transition: transform .55s cubic-bezier(.65,0,.35,1), opacity .4s ease;
+    will-change:transform;
+  }
+  .slide.is-active{ transform:translateX(0); opacity:1; z-index:2; }
+  .slide.is-before{ transform:translateX(-6%); opacity:0; z-index:1; pointer-events:none; }
+  .slide.is-after{  transform:translateX(6%);  opacity:0; z-index:1; pointer-events:none; }
+  @media (prefers-reduced-motion: reduce){
+    .slide{ transition:opacity .15s linear; }
+    .slide.is-before, .slide.is-after{ transform:none; }
+  }
+
+  .slide-inner{
+    width:100%;
+    max-width:760px;
+    max-height:100%;
+    overflow-y:auto;
+    padding:4px 2px 24px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .slide-inner.wide{ max-width:920px; }
+
+  .eyebrow{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.72rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--accent-strong);
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:7px;height:7px;border-radius:50%;
+    background:var(--accent);
+    display:inline-block;
+  }
+
+  h1.title{ font-size:clamp(1.9rem, 4.4vw, 3rem); }
+  h2.title{ font-size:clamp(1.5rem, 3.2vw, 2.15rem); }
+  .lead{
+    font-size:1.05rem;
+    line-height:1.6;
+    color:var(--ink-muted);
+    max-width:62ch;
+  }
+
+  /* ---- title slide ---- */
+  .hero{ text-align:left; }
+  .hero .chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:6px; }
+  .chip{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.78rem;
+    padding:5px 11px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    color:var(--ink-muted);
+    background:var(--surface);
+  }
+  .pulse-row{
+    display:flex; align-items:center; gap:10px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.85rem;
+    color:var(--good);
+    margin-top:4px;
+  }
+  .pulse-dot{
+    width:9px;height:9px;border-radius:50%;
+    background:var(--good);
+    box-shadow:0 0 0 0 color-mix(in srgb, var(--good) 55%, transparent);
+    animation:pulse 2.2s ease-out infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--good) 45%, transparent); }
+    70%{ box-shadow:0 0 0 9px color-mix(in srgb, var(--good) 0%, transparent); }
+    100%{ box-shadow:0 0 0 0 color-mix(in srgb, var(--good) 0%, transparent); }
+  }
+  @media (prefers-reduced-motion: reduce){ .pulse-dot{ animation:none; } }
+  .hint{
+    font-size:.82rem;
+    color:var(--ink-muted);
+    margin-top:22px;
+  }
+
+  /* ---- checklist ---- */
+  .checklist{ display:flex; flex-direction:column; gap:10px; }
+  .checklist li{
+    list-style:none;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:14px 16px;
+  }
+  .checklist ul{ margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  .check-mark{
+    flex:0 0 auto;
+    width:20px;height:20px;border-radius:6px;
+    background:var(--good-bg);
+    color:var(--good);
+    display:flex;align-items:center;justify-content:center;
+    font-size:.72rem; font-weight:700;
+    margin-top:2px;
+  }
+  .checklist .txt{ font-size:.96rem; line-height:1.55; }
+  .checklist .txt b{ color:var(--ink); }
+  .checklist .txt small{ display:block; color:var(--ink-muted); margin-top:2px; }
+
+  /* ---- terminal chrome ---- */
+  .term{
+    background:var(--term-bg);
+    border-radius:12px;
+    overflow:hidden;
+    box-shadow:var(--shadow);
+    border:1px solid color-mix(in srgb, var(--term-bg) 60%, black 10%);
+  }
+  .term-bar{
+    display:flex; align-items:center; gap:6px;
+    padding:9px 12px;
+    background:color-mix(in srgb, var(--term-bg) 85%, white 6%);
+    border-bottom:1px solid color-mix(in srgb, var(--term-bg) 70%, white 10%);
+  }
+  .term-bar .dot{ width:9px;height:9px;border-radius:50%; background:#5B6478; opacity:.55; }
+  .term-label{
+    margin-left:6px;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.72rem;
+    color:var(--term-muted);
+    letter-spacing:.03em;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .copy-btn{
+    margin-left:auto;
+    flex:0 0 auto;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    background:transparent;
+    border:1px solid color-mix(in srgb, var(--term-muted) 45%, transparent);
+    color:var(--term-muted);
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.68rem;
+    line-height:1;
+    padding:5px 9px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease;
+  }
+  .copy-btn:hover{ color:var(--term-ink); border-color:var(--accent); }
+  .copy-btn.is-copied{ color:var(--good); border-color:var(--good); }
+  .copy-btn svg{ width:12px; height:12px; flex:0 0 auto; }
+  .term-body{
+    margin:0;
+    padding:16px 18px 18px;
+    color:var(--term-ink);
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.9rem;
+    line-height:1.65;
+    white-space:pre-wrap;
+    word-break:break-word;
+  }
+  .term-body .rem{ color:var(--term-muted); }
+  .term-body .ok{ color:var(--good); }
+  .term-body .kw{ color:var(--accent-strong); }
+
+  /* ---- callouts ---- */
+  .callout{
+    border-radius:12px;
+    padding:14px 16px;
+    font-size:.94rem;
+    line-height:1.55;
+    border:1px solid transparent;
+  }
+  .callout.warn{ background:var(--warn-bg); color:var(--warn); border-color:color-mix(in srgb, var(--warn) 30%, transparent); }
+  .callout.good{ background:var(--good-bg); color:var(--good); border-color:color-mix(in srgb, var(--good) 30%, transparent); }
+  .callout b{ color:inherit; }
+  .callout .label{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    display:block;
+    margin-bottom:4px;
+    opacity:.85;
+  }
+
+  /* ---- table ---- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--line); border-radius:12px; }
+  table{ border-collapse:collapse; width:100%; font-size:.9rem; }
+  th,td{ text-align:left; padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  thead th{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.7rem; text-transform:uppercase; letter-spacing:.08em;
+    color:var(--ink-muted); background:var(--surface-2);
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+  td code{ font-size:.84rem; background:var(--surface-2); padding:1px 6px; border-radius:5px; }
+
+  /* ---- compare (two column) ---- */
+  .compare{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  @media (max-width:560px){ .compare{ grid-template-columns:1fr; } }
+  .compare .col{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:12px;
+    padding:16px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .compare .col h3{
+    margin:0; font-size:.95rem; font-family:"IBM Plex Sans",sans-serif; font-weight:600;
+  }
+  .compare .col p{ font-size:.88rem; color:var(--ink-muted); line-height:1.5; }
+  .compare .col.accent{ border-color:color-mix(in srgb, var(--accent) 40%, transparent); }
+
+  /* ---- steps ---- */
+  .steps{ display:flex; flex-direction:column; gap:12px; counter-reset:step; }
+  .steps li{
+    list-style:none;
+    display:flex; gap:14px; align-items:flex-start;
+    counter-increment:step;
+  }
+  .steps li::before{
+    content:counter(step);
+    flex:0 0 auto;
+    width:26px;height:26px;border-radius:50%;
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    color:var(--accent-strong);
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.8rem;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .steps li .txt{ font-size:.95rem; line-height:1.55; padding-top:2px; }
+
+  /* ---- token chip ---- */
+  .token{
+    display:inline-block;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.85rem;
+    background:var(--surface-2);
+    border:1px dashed var(--line);
+    padding:8px 12px;
+    border-radius:8px;
+    color:var(--ink);
+  }
+
+  /* ---- chat bubbles (telegram-flavoured) ---- */
+  .bubbles{ display:flex; flex-direction:column; gap:10px; }
+  .bubble{
+    align-self:flex-start;
+    max-width:90%;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px 16px 16px 4px;
+    padding:11px 15px;
+    font-size:.92rem;
+    line-height:1.5;
+    box-shadow:var(--shadow);
+  }
+  .bubble .to{
+    display:block;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.66rem;
+    text-transform:uppercase;
+    letter-spacing:.09em;
+    color:var(--accent-strong);
+    margin-bottom:4px;
+  }
+
+  /* ---- status dashboard (verification) ---- */
+  .status-list{ display:flex; flex-direction:column; gap:8px; }
+  .status-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:10px;
+    padding:12px 14px;
+  }
+  .status-pill{
+    flex:0 0 auto;
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.68rem;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    background:var(--good-bg);
+    color:var(--good);
+    padding:4px 9px;
+    border-radius:999px;
+  }
+  .status-row .cmd{ font-family:"IBM Plex Mono",monospace; font-size:.85rem; color:var(--ink-muted); margin-left:auto; }
+  .status-row .name{ font-size:.92rem; font-weight:500; }
+
+  /* ---- closing ---- */
+  .wing{ opacity:.9; }
+
+  /* ================= chrome (progress + nav) ================= */
+  .progress-track{
+    position:fixed; top:0; left:0; right:0; height:3px;
+    background:var(--line);
+    z-index:20;
+  }
+  .progress-fill{
+    height:100%;
+    background:linear-gradient(90deg, var(--accent), var(--accent-strong));
+    width:0%;
+    transition:width .5s cubic-bezier(.65,0,.35,1);
+  }
+  .navbar{
+    position:fixed; left:0; right:0; bottom:0; height:64px;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:0 22px;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(6px);
+    border-top:1px solid var(--line);
+    z-index:20;
+  }
+  .navbar .section-now{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.76rem;
+    color:var(--ink-muted);
+    letter-spacing:.03em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .nav-controls{ display:flex; align-items:center; gap:14px; flex:0 0 auto; }
+  .counter{
+    font-family:"IBM Plex Mono",monospace;
+    font-size:.78rem;
+    color:var(--ink-muted);
+    font-variant-numeric:tabular-nums;
+  }
+  .nav-btn{
+    width:38px;height:38px;
+    border-radius:50%;
+    border:1px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:border-color .15s ease, color .15s ease, transform .15s ease;
+  }
+  .nav-btn:hover{ border-color:var(--accent); color:var(--accent-strong); }
+  .nav-btn:active{ transform:scale(.94); }
+  .nav-btn:disabled{ opacity:.35; cursor:default; }
+  .nav-btn:disabled:hover{ border-color:var(--line); color:var(--ink); }
+  .nav-btn:focus-visible, button:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .nav-btn svg{ width:16px; height:16px; }
+
+  ::selection{ background:color-mix(in srgb, var(--accent) 35%, transparent); }
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide" data-section="Mulai">
+    <div class="slide-inner hero">
+      <span class="eyebrow">Panduan Setup &middot; Windows Native</span>
+      <h1 class="title">Setting Hermes</h1>
+      <p class="lead">Dari instalasi bersih di Windows sampai bot-nya membalas di Telegram — plus contoh otomasi browser lewat bahasa biasa.</p>
+      <div class="chips">
+        <span class="chip">Windows 10/11</span>
+        <span class="chip">Tanpa WSL</span>
+        <span class="chip">mesin: ASUS-ATG</span>
+      </div>
+      <div class="pulse-row"><span class="pulse-dot"></span> gateway: siap disambungkan</div>
+      <p class="hint">→ tekan panah kanan, klik tombol di bawah, atau geser untuk mulai</p>
+    </div>
+  </section>
+
+  <!-- 2 — PRASYARAT -->
+  <section class="slide" data-section="0 — Sebelum Mulai">
+    <div class="slide-inner">
+      <span class="eyebrow">0 — Sebelum Mulai</span>
+      <h2 class="title">Yang Perlu Disiapkan</h2>
+      <ul class="checklist">
+        <li>
+          <span class="check-mark">✓</span>
+          <span class="txt"><b>Windows 10/11.</b><small>Panduan ini native Windows — bukan WSL.</small></span>
+        </li>
+        <li>
+          <span class="check-mark">✓</span>
+          <span class="txt"><b>Akun Telegram.</b><small>Buat bot & untuk chat dengan Hermes-nya nanti.</small></span>
+        </li>
+        <li>
+          <span class="check-mark">✓</span>
+          <span class="txt"><b>Provider AI.</b><small>API key (Anthropic/OpenRouter/dll), <i>atau</i> sudah login Claude Code — Hermes bisa langsung pakai kredensial di <code class="mono">C:\Users\&lt;user&gt;\.claude\.credentials.json</code>.</small></span>
+        </li>
+        <li>
+          <span class="check-mark">✓</span>
+          <span class="txt"><b>Git terpasang</b> (<code class="mono">git --version</code>).<small>Installer memasang Python, Node.js, ripgrep, dan ffmpeg sendiri — tidak perlu manual.</small></span>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 3 — INSTALASI -->
+  <section class="slide" data-section="1 — Instalasi">
+    <div class="slide-inner">
+      <span class="eyebrow">1 — Instalasi</span>
+      <h2 class="title">Satu Baris, dari Command Prompt</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">cmd — tidak perlu Run as Administrator</span></div>
+        <pre class="term-body">powershell -Command "iex (irm https://hermes-agent.nousresearch.com/install.ps1)"</pre>
+      </div>
+      <p class="lead" style="font-size:.84rem;">Installer resminya script PowerShell asli — tidak ada versi <code class="mono">cmd</code>/<code class="mono">.bat</code>-nya. Tapi kamu tidak perlu buka PowerShell manual: baris di atas dijalankan dari jendela <b>Command Prompt</b>, cuma menitipkan satu perintah ke engine PowerShell lalu langsung kembali ke <code class="mono">cmd</code>. Semua <code class="mono">hermes ...</code> sesudah ini murni <code class="mono">cmd</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Apa</th><th>Di mana (Windows)</th></tr></thead>
+          <tbody>
+            <tr><td>Kode Hermes</td><td><code>...\AppData\Local\hermes\hermes-agent\</code></td></tr>
+            <tr><td>Data &amp; konfigurasi<br><small style="color:var(--ink-muted)">.env, config.yaml, memories</small></td><td><code>...\AppData\Local\hermes\</code></td></tr>
+            <tr><td>Perintah <code>hermes</code></td><td>otomatis masuk PATH (<code>hermes.exe</code>)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">verifikasi</span></div>
+        <pre class="term-body">hermes --version
+hermes doctor</pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — PROVIDER AI -->
+  <section class="slide" data-section="2 — Provider AI">
+    <div class="slide-inner">
+      <span class="eyebrow">2 — Provider AI</span>
+      <h2 class="title">Pilih Otak Hermes</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">cmd atau PowerShell</span></div>
+        <pre class="term-body">hermes setup</pre>
+      </div>
+      <p class="lead">Wizard interaktif akan tanya provider (Anthropic, OpenRouter, Nous Portal, dll.) dan model.</p>
+      <div class="callout good">
+        <span class="label">Sudah pakai Claude Code?</span>
+        Hermes otomatis mendeteksi kredensialnya lewat <code class="mono">hermes auth status anthropic</code> → <code class="mono">anthropic: logged in</code>. Tidak perlu isi API key terpisah.
+      </div>
+      <p class="lead">Ganti pilihan kapan saja tanpa ulang wizard penuh: <span class="token">hermes model</span></p>
+    </div>
+  </section>
+
+  <!-- 5 — BOTFATHER -->
+  <section class="slide" data-section="3.1 — Telegram">
+    <div class="slide-inner">
+      <span class="eyebrow">3.1 — Telegram</span>
+      <h2 class="title">Buat Bot lewat @BotFather</h2>
+      <ol class="steps">
+        <li><span class="txt">Buka Telegram, chat ke <b>@BotFather</b>.</span></li>
+        <li><span class="txt">Kirim <code class="mono">/newbot</code>, ikuti prompt (nama bebas, username unik &amp; berakhiran <code class="mono">bot</code>).</span></li>
+        <li><span class="txt">BotFather membalas dengan <b>token API</b>, contohnya:<br><span class="token">123456789:ABCdefGHIjklMNOpqrSTUvwxYZ</span></span></li>
+      </ol>
+      <div class="callout warn">
+        <span class="label">Awas</span>
+        Token ini setara password bot. Jangan pernah disimpan permanen di chat AI mana pun. Kalau ragu ke-expose sekali, <code class="mono">/revoke</code> di BotFather dan buat baru.
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — USER ID -->
+  <section class="slide" data-section="3.2 — Telegram">
+    <div class="slide-inner">
+      <span class="eyebrow">3.2 — Telegram</span>
+      <h2 class="title">Cari User ID Kamu</h2>
+      <p class="lead">Bot butuh tahu <b>User ID</b> (angka) kamu — bukan username.</p>
+      <div class="callout good">
+        Chat ke <b>@userinfobot</b> di Telegram — dia langsung balas ID kamu.
+      </div>
+      <p class="lead" style="color:var(--ink-muted); font-size:.9rem;">Simpan angka ini, dipakai di langkah berikutnya.</p>
+    </div>
+  </section>
+
+  <!-- 7 — KONFIGURASI (gotcha penting) -->
+  <section class="slide" data-section="3.3 — Telegram">
+    <div class="slide-inner wide">
+      <span class="eyebrow">3.3 — Telegram</span>
+      <h2 class="title">Hubungkan Token ke Hermes</h2>
+      <div class="compare">
+        <div class="col accent">
+          <h3>Opsi A — Wizard <span style="color:var(--accent-strong); font-weight:400;">(disarankan)</span></h3>
+          <div class="term">
+            <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span></div>
+            <pre class="term-body">hermes gateway setup</pre>
+          </div>
+          <p>Pilih Telegram, masukkan token + User ID — wizard yang menulis konfigurasinya.</p>
+        </div>
+        <div class="col">
+          <h3>Opsi B — Manual</h3>
+          <div class="term">
+            <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">.env</span></div>
+            <pre class="term-body">TELEGRAM_BOT_TOKEN=123456789:ABC...
+TELEGRAM_ALLOWED_USERS=123456789</pre>
+          </div>
+          <p>Edit langsung di <code>...\AppData\Local\hermes\.env</code></p>
+        </div>
+      </div>
+      <div class="callout warn">
+        <span class="label">🔴 Gotcha nyata yang pernah kejadian</span>
+        Isi <code class="mono">.env</code> saja <b>TIDAK CUKUP</b> — gateway diam dengan log <code class="mono">No messaging platforms enabled</code>, kecuali platform-nya diaktifkan eksplisit:
+      </div>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">config.yaml</span></div>
+        <pre class="term-body">gateway:
+  platforms:
+    - telegram</pre>
+      </div>
+      <p class="lead" style="font-size:.88rem;">Bentuknya <b>list</b>, bukan dict. Opsi A menulis ini otomatis — kalau pakai Opsi B, jangan lupa baris ini.</p>
+    </div>
+  </section>
+
+  <!-- 8 — JALANKAN GATEWAY -->
+  <section class="slide" data-section="3.4 — Telegram">
+    <div class="slide-inner">
+      <span class="eyebrow">3.4 — Telegram</span>
+      <h2 class="title">Nyalakan Gateway</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">cmd atau PowerShell — foreground, Ctrl+C untuk stop</span></div>
+        <pre class="term-body">hermes gateway run</pre>
+      </div>
+      <p class="lead">Kirim pesan apa saja ke bot-nya di Telegram untuk tes koneksi.</p>
+      <div class="callout warn">
+        <span class="label">Bukan <code class="mono">/start</code></span>
+        Kalau home channel sudah ke-set, <code class="mono">/start</code> sengaja diabaikan sebagai "platform ping", bukan pesan biasa. Tes pakai pesan biasa — misalnya <i>"halo"</i>.
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — AUTOSTART -->
+  <section class="slide" data-section="4 — Autostart">
+    <div class="slide-inner">
+      <span class="eyebrow">4 — Autostart Windows</span>
+      <h2 class="title">Jalan Sendiri Tiap Laptop Nyala</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">cmd atau PowerShell</span></div>
+        <pre class="term-body">hermes gateway install --start-now --start-on-login</pre>
+      </div>
+      <p class="lead" style="font-size:.92rem;">Di Windows ini mendaftarkan <b>Scheduled Task</b> (<code class="mono">Hermes_Gateway</code>) saat logon — bukan systemd (itu khusus Linux/WSL).</p>
+      <div class="term term-output">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">hermes gateway status → contoh output</span></div>
+        <pre class="term-body"><span class="ok">✓</span> Scheduled Task registered: Hermes_Gateway
+  Status: Ready
+<span class="ok">✓</span> Gateway process running (PID: xxxxx)</pre>
+      </div>
+      <div class="callout warn" style="font-size:.86rem;">
+        <span class="label">Dua gotcha</span>
+        Proses muncul sebagai <code class="mono">python.exe</code> di Task Manager — <b>bukan</b> <code class="mono">hermes.exe</code>. Dan ada celah startup ~20 detik: pesan yang masuk saat itu bisa terserap tapi tidak diproses.
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — VERIFIKASI -->
+  <section class="slide" data-section="5 — Verifikasi">
+    <div class="slide-inner">
+      <span class="eyebrow">5 — Verifikasi Akhir</span>
+      <h2 class="title">Checklist Akhir</h2>
+      <div class="status-list">
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Kesehatan umum</span><span class="cmd">hermes doctor</span></div>
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Status gateway</span><span class="cmd">hermes gateway status</span></div>
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Kredensial provider AI</span><span class="cmd">hermes auth status anthropic</span></div>
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Bot benar-benar membalas</span><span class="cmd">kirim "halo" di Telegram</span></div>
+      </div>
+      <p class="lead">Kalau semua di atas hijau — Hermes sudah <b>selesai</b> setup dari nol sampai terhubung ke Telegram.</p>
+    </div>
+  </section>
+
+  <!-- 11 — BROWSER INTRO -->
+  <section class="slide" data-section="6 — Browser Automation">
+    <div class="slide-inner wide">
+      <span class="eyebrow">6 — Browser Automation</span>
+      <h2 class="title"><code style="font-family:inherit;">browser_exec</code>, Bukan <code style="font-family:inherit;">computer_use</code></h2>
+      <div class="compare">
+        <div class="col accent">
+          <h3>🌐 browser</h3>
+          <p>Otomasi <b>di dalam web</b>: buka halaman, klik, isi form, scroll, baca isi halaman.</p>
+        </div>
+        <div class="col">
+          <h3>🖱️ computer_use</h3>
+          <p>Kontrol penuh layar/mouse/keyboard desktop — buat app <b>tanpa API</b> (WhatsApp Web, dll).</p>
+        </div>
+      </div>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">cmd atau PowerShell</span></div>
+        <pre class="term-body">hermes tools list</pre>
+      </div>
+      <p class="lead" style="font-size:.9rem;">Cari baris <span class="token"><span class="ok">✓</span> enabled&nbsp; browser&nbsp; 🌐 Browser Automation</span></p>
+    </div>
+  </section>
+
+  <!-- 12 — CONTOH PERINTAH (chat bubbles) -->
+  <section class="slide" data-section="6 — Contoh Perintah">
+    <div class="slide-inner">
+      <span class="eyebrow">6 — Contoh Perintah</span>
+      <h2 class="title">Cukup Bahasa Biasa</h2>
+      <p class="lead" style="font-size:.92rem;">Tidak perlu tahu nama tool internal — ketik saja instruksinya ke Hermes.</p>
+      <div class="bubbles">
+        <div class="bubble"><span class="to">ke Hermes</span>Buka https://github.com/trending dan kasih tahu 5 repo paling atas hari ini.</div>
+        <div class="bubble"><span class="to">ke Hermes</span>Isi form kontak di &lt;url&gt; dengan nama saya, tapi jangan klik submit — tunjukkan dulu isiannya.</div>
+        <div class="bubble"><span class="to">ke Hermes</span>Screenshot halaman &lt;url&gt; — ada CAPTCHA atau elemen visual yang perlu dicek manual?</div>
+        <div class="bubble"><span class="to">ke Hermes</span>Cek console browser di &lt;url&gt;, ada error JavaScript yang muncul?</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 — REAL PROFILE -->
+  <section class="slide" data-section="6 — Login Sebagai Kamu">
+    <div class="slide-inner">
+      <span class="eyebrow">6 — Login Sebagai Kamu</span>
+      <h2 class="title">Browsing Pakai Akun Sendiri</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">config.yaml</span></div>
+        <pre class="term-body">browser:
+  use_real_profile: true</pre>
+      </div>
+      <div class="callout warn">
+        <span class="label">Khusus Windows</span>
+        Chrome/Edge/Brave harus <b>benar-benar tertutup total</b> (termasuk proses tray) sebelum Hermes bisa menyalin profilnya — kalau tidak, gagal dengan pesan yang jelas, bukan hang diam-diam.
+      </div>
+      <p class="lead" style="font-size:.88rem;"><code class="mono">browser.real_profile_autoclose: true</code> → Hermes bisa <i>menawarkan</i> menutup browser buat kamu (selalu minta izin dulu, tidak pernah paksa).</p>
+      <div class="callout good" style="font-size:.86rem;">Consent-gated, bukan sandbox — halaman yang dibuka benar-benar login sebagai kamu. Default: mati.</div>
+    </div>
+  </section>
+
+  <!-- 14 — HEADED MODE / CONNECT -->
+  <section class="slide" data-section="6 — Mode Lanjutan">
+    <div class="slide-inner">
+      <span class="eyebrow">6 — Mode Lanjutan</span>
+      <h2 class="title">Lihat Browser-nya Bekerja</h2>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">config.yaml</span></div>
+        <pre class="term-body">browser:
+  headed: true</pre>
+      </div>
+      <p class="lead" style="font-size:.92rem;">Berguna kalau ada CAPTCHA/2FA yang perlu diselesaikan manual di tengah sesi.</p>
+      <div class="term">
+        <div class="term-bar"><span class="dot"></span><span class="dot"></span><span class="dot"></span><span class="term-label">CLI only — hermes / hermes chat</span></div>
+        <pre class="term-body">/browser connect
+/browser status
+/browser disconnect</pre>
+      </div>
+      <div class="callout warn" style="font-size:.86rem;">Hanya jalan di CLI terminal — <b>tidak bisa</b> dipanggil dari chat Telegram.</div>
+    </div>
+  </section>
+
+  <!-- 15 — DOKUMEN LANJUTAN -->
+  <section class="slide" data-section="7 — Lanjutan">
+    <div class="slide-inner wide">
+      <span class="eyebrow">7 — Dokumen Lanjutan</span>
+      <h2 class="title">Kalau Butuh Lebih Dalam</h2>
+      <p class="lead" style="font-size:.9rem;">Untuk integrasi spesifik proyek AAM/PrahuHub, lihat file lain di folder yang sama:</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Topik</th><th>File</th></tr></thead>
+          <tbody>
+            <tr><td>Mattermost Boards, Figma, Drive, workflow bug/task</td><td><code>CommandforMarbot.md</code></td></tr>
+            <tr><td>Setup OAuth Google Drive dari nol</td><td><code>GOOGLE_DRIVE_SETUP.md</code></td></tr>
+            <tr><td>Riwayat &amp; gotcha teknis mesin ini</td><td><code>SETUP_PROGRESS.md</code></td></tr>
+            <tr><td>Template generik (cron, keamanan)</td><td><code>TEAM_HERMES_SETUP_GUIDE.md</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 — CLOSING -->
+  <section class="slide" data-section="Selesai">
+    <div class="slide-inner hero">
+      <span class="eyebrow wing">🪽 Selesai</span>
+      <h1 class="title">Hermes Sudah Terbang.</h1>
+      <p class="lead">Hidup di Windows, terhubung ke Telegram, siap dipakai bahasa biasa — termasuk buka &amp; isi halaman web sendiri.</p>
+      <div class="status-list" style="margin-top:8px;">
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Gateway</span><span class="cmd">connected</span></div>
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Provider AI</span><span class="cmd">logged in</span></div>
+        <div class="status-row"><span class="status-pill">ok</span><span class="name">Telegram</span><span class="cmd">membalas</span></div>
+      </div>
+      <p class="hint">Dibuat dari HERMES_SETUP_WINDOWS.md — proyek AAM/hermes.</p>
+    </div>
+  </section>
+
+</div>
+
+<nav class="navbar">
+  <span class="section-now" id="sectionNow">Mulai</span>
+  <div class="nav-controls">
+    <span class="counter" id="counter">1 / 16</span>
+    <button class="nav-btn" id="prevBtn" aria-label="Slide sebelumnya">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <button class="nav-btn" id="nextBtn" aria-label="Slide berikutnya">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+    </button>
+  </div>
+</nav>
+
+<script>
+(function(){
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var idx = 0;
+  var total = slides.length;
+  var progressFill = document.getElementById('progressFill');
+  var counter = document.getElementById('counter');
+  var sectionNow = document.getElementById('sectionNow');
+  var prevBtn = document.getElementById('prevBtn');
+  var nextBtn = document.getElementById('nextBtn');
+
+  function render(){
+    slides.forEach(function(s, i){
+      s.classList.remove('is-active','is-before','is-after');
+      if(i === idx) s.classList.add('is-active');
+      else if(i < idx) s.classList.add('is-before');
+      else s.classList.add('is-after');
+    });
+    progressFill.style.width = (total > 1 ? (idx/(total-1))*100 : 0) + '%';
+    counter.textContent = (idx+1) + ' / ' + total;
+    sectionNow.textContent = slides[idx].getAttribute('data-section') || '';
+    prevBtn.disabled = idx === 0;
+    nextBtn.disabled = idx === total-1;
+  }
+
+  function go(delta){
+    var next = Math.min(total-1, Math.max(0, idx+delta));
+    if(next === idx) return;
+    idx = next;
+    render();
+  }
+
+  prevBtn.addEventListener('click', function(){ go(-1); });
+  nextBtn.addEventListener('click', function(){ go(1); });
+
+  window.addEventListener('keydown', function(e){
+    if(['ArrowRight','ArrowDown','PageDown',' '].indexOf(e.key) > -1){ e.preventDefault(); go(1); }
+    else if(['ArrowLeft','ArrowUp','PageUp'].indexOf(e.key) > -1){ e.preventDefault(); go(-1); }
+    else if(e.key === 'Home'){ idx = 0; render(); }
+    else if(e.key === 'End'){ idx = total-1; render(); }
+  });
+
+  var touchX = null, touchY = null;
+  document.getElementById('deck').addEventListener('touchstart', function(e){
+    touchX = e.changedTouches[0].clientX;
+    touchY = e.changedTouches[0].clientY;
+  }, {passive:true});
+  document.getElementById('deck').addEventListener('touchend', function(e){
+    if(touchX === null) return;
+    var dx = e.changedTouches[0].clientX - touchX;
+    var dy = e.changedTouches[0].clientY - touchY;
+    if(Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)){
+      go(dx < 0 ? 1 : -1);
+    }
+    touchX = null; touchY = null;
+  }, {passive:true});
+
+  var COPY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="2" width="6" height="4" rx="1"></rect><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"></path></svg><span>Copy</span>';
+  var DONE_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg><span>Disalin</span>';
+
+  function copyText(text){
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text);
+    }
+    return new Promise(function(resolve, reject){
+      var ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try{
+        document.execCommand('copy') ? resolve() : reject();
+      }catch(err){ reject(err); }
+      document.body.removeChild(ta);
+    });
+  }
+
+  Array.prototype.slice.call(document.querySelectorAll('.term:not(.term-output)')).forEach(function(term){
+    var bar = term.querySelector('.term-bar');
+    var body = term.querySelector('.term-body');
+    if(!bar || !body) return;
+    var btn = document.createElement('button');
+    btn.className = 'copy-btn';
+    btn.type = 'button';
+    btn.setAttribute('aria-label', 'Salin perintah');
+    btn.innerHTML = COPY_ICON;
+    btn.addEventListener('click', function(){
+      copyText(body.textContent).then(function(){
+        btn.innerHTML = DONE_ICON;
+        btn.classList.add('is-copied');
+        setTimeout(function(){
+          btn.innerHTML = COPY_ICON;
+          btn.classList.remove('is-copied');
+        }, 1500);
+      }).catch(function(){
+        btn.querySelector('span').textContent = 'Gagal';
+      });
+    });
+    bar.appendChild(btn);
+  });
+
+  render();
+})();
+</script>
